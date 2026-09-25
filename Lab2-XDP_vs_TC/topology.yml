@@ -1,0 +1,13 @@
+name: ebpf-lab2
+topology:
+  nodes:
+    h1:
+      kind: linux
+      image: ubuntu:22.04
+      exec: [apt-get update, apt-get install -y iproute2 iputils-ping netcat-openbsd tcpdump]
+    h2:
+      kind: linux
+      image: ubuntu:22.04
+      exec: [apt-get update, apt-get install -y iproute2 iputils-ping netcat-openbsd tcpdump]
+  links:
+    - endpoints: ["h1:eth1", "h2:eth1"]

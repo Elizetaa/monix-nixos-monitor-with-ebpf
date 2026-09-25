@@ -15,11 +15,16 @@
       devShells.${system}.default = pkgs.mkShell {
         packages = with pkgs; [
           # eBPF
-          bpftrace
-          bcc
-          clang
+          llvmPackages.clang-unwrapped
           llvm
+          bpftools
+          bpftrace
+          clang
           libbpf
+          pahole
+          elfutils
+          tcpdump
+          gcc
 
           # Development
           python3
@@ -31,21 +36,9 @@
 
           # Useful tools
           iproute2
-          bpftools
-          jq
-          curl
+          gnumake
+          pkg-config
         ];
-
-        shellHook = ''
-          echo "eBPF development environment"
-          echo
-          echo "Available:"
-          echo "  bpftrace  - eBPF tracing"
-          echo "  bcc       - BPF Compiler Collection"
-          echo "  clang     - eBPF compiler"
-          echo "  prometheus - metrics storage"
-          echo "  grafana   - dashboards"
-        '';
       };
     };
 }
