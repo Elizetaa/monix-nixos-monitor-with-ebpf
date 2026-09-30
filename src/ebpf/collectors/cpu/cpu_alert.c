@@ -61,9 +61,9 @@ int main(int argc, char **argv)
     signal(SIGINT, handle_stop);
     signal(SIGTERM, handle_stop);
 
-    struct bpf_object *obj = bpf_object__open_file("cpu_alert.bpf.o", NULL);
+    struct bpf_object *obj = bpf_object__open_file("build/cpu_alert.bpf.o", NULL);
     if (!obj) {
-        fprintf(stderr, "Erro ao abrir cpu_alert.bpf.o (ele existe neste diretório?)\n");
+        fprintf(stderr, "Erro ao abrir build/cpu_alert.bpf.o (compile com make a partir de src/ebpf).\n");
         return 1;
     }
 
