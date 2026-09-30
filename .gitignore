@@ -1,0 +1,99 @@
+# =========================
+# C / C++ - Build artifacts
+# =========================
+
+# Object files
+*.o
+*.obj
+
+# Libraries
+*.a
+*.so
+*.so.*
+*.dylib
+*.dll
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
+
+# Debug / profiling
+*.dSYM/
+*.gcda
+*.gcno
+*.gcov
+
+# Build directories
+build/
+_build/
+cmake-build-*/
+out/
+
+# CMake
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+compile_commands.json
+*.cmake
+
+# Autotools
+autom4te.cache/
+config.log
+config.status
+libtool
+Makefile.in
+aclocal.m4
+
+# =========================
+# eBPF
+# =========================
+
+# Compiled eBPF object files
+*.bpf.o
+
+# eBPF skeletons / generated files
+*.skel.h
+
+# BPF generated artifacts
+vmlinux.h
+
+# BTF / debug artifacts
+*.btf
+*.btf.o
+
+# bpftool generated files
+*.bpf.h
+
+# =========================
+# Clang / LLVM
+# =========================
+
+*.bc
+*.ll
+
+# =========================
+# Editor / IDE
+# =========================
+
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# =========================
+# OS
+# =========================
+
+.DS_Store
+Thumbs.db
+
+# =========================
+# Logs / temporary files
+# =========================
+
+*.log
+*.tmp
+*.temp

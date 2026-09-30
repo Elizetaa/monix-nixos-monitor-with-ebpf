@@ -15,7 +15,10 @@ pkgs.mkShell {
     libbpf
     linuxHeaders
     pkg-config
+    tcpdump
+    netcat-openbsd
   ];
 
-  NIX_CFLAGS_COMPILE = "-I${linuxHeaders}/include";
+  # Os headers UAPI (incluindo linux/types.h) ficam em include/uapi no NixOS.
+  NIX_CFLAGS_COMPILE = "-I${linuxHeaders}/include/uapi -I${linuxHeaders}/include";
 }
