@@ -1,0 +1,1 @@
+"""Contabilidade da memória RAM."""

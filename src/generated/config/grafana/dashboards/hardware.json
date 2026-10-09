@@ -1,0 +1,2022 @@
+{
+  "uid": "monix-hardware",
+  "title": "Monix — Hardware e eBPF",
+  "description": "CPU, GPU, RAM, discos físicos e sensores térmicos do Linux. Métricas ausentes indicam hardware/driver sem suporte.",
+  "tags": [
+    "monix",
+    "ebpf",
+    "hardware"
+  ],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "editable": false,
+  "refresh": "5s",
+  "time": {
+    "from": "now-30m",
+    "to": "now"
+  },
+  "timepicker": {
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m"
+    ]
+  },
+  "annotations": {
+    "list": []
+  },
+  "links": [],
+  "templating": {
+    "list": [
+      {
+        "name": "instance",
+        "label": "Computador",
+        "type": "query",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "monix-prometheus"
+        },
+        "definition": "label_values(monix_collector_success{job=\"monix\"}, instance)",
+        "query": {
+          "query": "label_values(monix_collector_success{job=\"monix\"}, instance)",
+          "refId": "MonixInstances"
+        },
+        "refresh": 1,
+        "multi": false,
+        "includeAll": false,
+        "sort": 1,
+        "current": {
+          "selected": false,
+          "text": "",
+          "value": ""
+        },
+        "options": []
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "row",
+      "title": "Visão geral",
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 1
+      },
+      "panels": []
+    },
+    {
+      "id": 2,
+      "type": "gauge",
+      "title": "Uso da CPU",
+      "description": "Tempo ocupado na janela de coleta. A origem eBPF/proc aparece na legenda.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "monix-prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 1,
+        "w": 4,
+        "h": 6
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "monix-prometheus"
+          },
+          "expr": "monix_cpu_usage_percent{instance=\"$instance\",job=\"monix\",cpu=\"all\"}",
+          "legendFormat": "CPU ({{source}})",
+          "range": true,
+          "instant": false,
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "decimals": 1,
+          "noValue": "Indisponível",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 80
+              },
+              {
+                "color": "red",
+                "value": 95
+              }
+            ]
+          },
+          "custom": {},
+          "min": 0,
+          "max": 100
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true
+      }
+    },
+    {
+      "id": 3,
+      "type": "gauge",
+      "title": "Temperatura máxima da CPU",
+      "description": "Maior leitura válida entre pacote e núcleos. Em AMD, Tctl pode incluir offset para controle térmico.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "monix-prometheus"
+      },
+      "gridPos": {
+        "x": 4,
+        "y": 1,
+        "w": 4,
+        "h": 6
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "monix-prometheus"
+          },
+          "expr": "max(monix_cpu_temperature_celsius{instance=\"$instance\",job=\"monix\"})",
+          "legendFormat": "CPU",
+          "range": true,
+          "instant": false,
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "celsius",
+          "decimals": 1,
+          "noValue": "Indisponível",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 70
+              },
+              {
+                "color": "red",
+                "value": 90
+              }
+            ]
+          },
+          "custom": {},
+          "min": 0,
+          "max": 100
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true
+      }
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "RAM alocada",
+      "description": "Exclui páginas livres e cache/buffers recuperáveis; inclui memória compartilhada.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "monix-prometheus"
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 1,
+        "w": 4,
+        "h": 6
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "monix-prometheus"
+          },
+          "expr": "monix_memory_allocated_bytes{instance=\"$instance\",job=\"monix\"}",
+          "legendFormat": "Alocada",
+          "range": true,
+          "instant": false,
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "decimals": 1,
+          "noValue": "Indisponível",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 80
+              },
+              {
+                "color": "red",
+                "value": 95
+              }
+            ]
+          },
+          "custom": {}
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      }
+    },
+    {
+      "id": 5,
+      "type": "stat",
+      "title": "RAM total",
+      "description": "",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "monix-prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 1,
+        "w": 4,
+        "h": 6
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "monix-prometheus"
+          },
+          "expr": "monix_memory_total_bytes{instance=\"$instance\",job=\"monix\"}",
+          "legendFormat": "Total",
+          "range": true,
+          "instant": false,
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "decimals": 1,
+          "noValue": "Indisponível",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 80
+              },
+              {
+                "color": "red",
+                "value": 95
+              }
+            ]
+          },
+          "custom": {}
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      }
+    },
+    {
+      "id": 6,
+      "type": "gauge",
+      "title": "Ar interno / entrada do gabinete",
+      "description": "Estimativa baseada somente em sensores ambiente/inlet ou system/chassis/mainboard identificados. Não equivale à temperatura da sala. Ausência de sensor adequado aparece como Indisponível.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "monix-prometheus"
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 1,
+        "w": 4,
+        "h": 6
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "monix-prometheus"
+          },
+          "expr": "monix_motherboard_ambient_estimate_celsius{instance=\"$instance\",job=\"monix\"}",
+          "legendFormat": "Estimativa",
+          "range": true,
+          "instant": false,
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "celsius",
+          "decimals": 1,
+          "noValue": "Indisponível",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 70
+              },
+              {
+                "color": "red",
+                "value": 90
+              }
+            ]
+          },
+          "custom": {},
+          "min": 0,
+          "max": 100
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true
+      }
+    },
+    {
+      "id": 7,
+      "type": "stat",
+      "title": "Coleta eBPF da CPU",
+      "description": "1 exige helper vivo com amostra recente. 0 indica inicialização ou uso de /proc/stat.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "monix-prometheus"
+      },
+      "gridPos": {
+        "x": 20,
+        "y": 1,
+        "w": 4,
+        "h": 6
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "monix-prometheus"
+          },
+          "expr": "monix_cpu_ebpf_attached{instance=\"$instance\",job=\"monix\"}",
+          "legendFormat": "eBPF",
+          "range": true,
+          "instant": false,
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 0,
+          "noValue": "Indisponível",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 80
+              },
+              {
+                "color": "red",
+                "value": 95
+              }
+            ]
+          },
+          "custom": {},
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "Sem amostra eBPF",
+                  "color": "orange"
+                },
+                "1": {
+                  "text": "eBPF ativo",
+                  "color": "green"
+                }
+              }
+            }
+          ]
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      }
+    },
+    {
+      "id": 8,
+      "type": "timeseries",
+      "title": "Uso da CPU por núcleo",
+      "description": "",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "monix-prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 7,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "monix-prometheus"
+          },
+          "expr": "monix_cpu_usage_percent{instance=\"$instance\",job=\"monix\",cpu!=\"all\"}",
+          "legendFormat": "CPU {{cpu}} ({{source}})",
+          "range": true,
+          "instant": false,
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "decimals": 1,
+          "noValue": "Indisponível",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 80
+              },
+              {
+                "color": "red",
+                "value": 95
+              }
+            ]
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "fillOpacity": 8,
+            "showPoints": "never",
+            "spanNulls": false,
+            "axisPlacement": "auto",
+            "axisLabel": ""
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 9,
+      "type": "timeseries",
+      "title": "Temperaturas da CPU",
+      "description": "",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "monix-prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 7,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "monix-prometheus"
+          },
+          "expr": "monix_cpu_temperature_celsius{instance=\"$instance\",job=\"monix\"}",
+          "legendFormat": "{{chip}} / {{label}}",
+          "range": true,
+          "instant": false,
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "celsius",
+          "decimals": 1,
+          "noValue": "Indisponível",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 70
+              },
+              {
+                "color": "red",
+                "value": 90
+              }
+            ]
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "fillOpacity": 8,
+            "showPoints": "never",
+            "spanNulls": false,
+            "axisPlacement": "auto",
+            "axisLabel": ""
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 10,
+      "type": "row",
+      "title": "GPU — disponibilidade conforme hardware e driver",
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 15,
+        "w": 24,
+        "h": 1
+      },
+      "panels": []
+    },
+    {
+      "id": 11,
+      "type": "timeseries",
+      "title": "Uso de cada GPU",
+      "description": "AMD: gpu_busy_percent; NVIDIA: nvidia-smi. Intel somente quando o driver expõe uso em porcentagem.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "monix-prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 16,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "monix-prometheus"
+          },
+          "expr": "monix_gpu_usage_percent{instance=\"$instance\",job=\"monix\"}",
+          "legendFormat": "{{vendor}} {{gpu}}",
+          "range": true,
+          "instant": false,
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "decimals": 1,
+          "noValue": "Indisponível",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 80
+              },
+              {
+                "color": "red",
+                "value": 95
+              }
+            ]
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "fillOpacity": 8,
+            "showPoints": "never",
+            "spanNulls": false,
+            "axisPlacement": "auto",
+            "axisLabel": ""
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 12,
+      "type": "timeseries",
+      "title": "Temperaturas de GPU",
+      "description": "",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "monix-prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 16,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "monix-prometheus"
+          },
+          "expr": "monix_gpu_temperature_celsius{instance=\"$instance\",job=\"monix\"}",
+          "legendFormat": "{{vendor}} {{gpu}} / {{label}}",
+          "range": true,
+          "instant": false,
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "celsius",
+          "decimals": 1,
+          "noValue": "Indisponível",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 70
+              },
+              {
+                "color": "red",
+                "value": 90
+              }
+            ]
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "fillOpacity": 8,
+            "showPoints": "never",
+            "spanNulls": false,
+            "axisPlacement": "auto",
+            "axisLabel": ""
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 13,
+      "type": "timeseries",
+      "title": "Fans de GPU — rotação medida",
+      "description": "RPM de fan*_input via hwmon. Só existe quando exposto pelo driver.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "monix-prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 24,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "monix-prometheus"
+          },
+          "expr": "monix_gpu_fan_speed_rpm{instance=\"$instance\",job=\"monix\"}",
+          "legendFormat": "{{gpu}} / {{label}}",
+          "range": true,
+          "instant": false,
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "rpm",
+          "decimals": 1,
+          "noValue": "Indisponível",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 80
+              },
+              {
+                "color": "red",
+                "value": 95
+              }
+            ]
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "fillOpacity": 8,
+            "showPoints": "never",
+            "spanNulls": false,
+            "axisPlacement": "auto",
+            "axisLabel": ""
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 14,
+      "type": "timeseries",
+      "title": "Fans NVIDIA — velocidade pretendida",
+      "description": "fan.speed de nvidia-smi é porcentagem da velocidade pretendida, não uma medição de RPM; pode ultrapassar 100%.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "monix-prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 24,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "monix-prometheus"
+          },
+          "expr": "monix_gpu_fan_speed_percent{instance=\"$instance\",job=\"monix\"}",
+          "legendFormat": "{{gpu}} / {{label}}",
+          "range": true,
+          "instant": false,
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "decimals": 1,
+          "noValue": "Indisponível",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 80
+              },
+              {
+                "color": "red",
+                "value": 95
+              }
+            ]
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "fillOpacity": 8,
+            "showPoints": "never",
+            "spanNulls": false,
+            "axisPlacement": "auto",
+            "axisLabel": ""
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 15,
+      "type": "row",
+      "title": "Memória RAM",
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 32,
+        "w": 24,
+        "h": 1
+      },
+      "panels": []
+    },
+    {
+      "id": 16,
+      "type": "timeseries",
+      "title": "RAM alocada, usada, disponível e total",
+      "description": "Alocada é contabilidade sem cache recuperável; usada usa MemAvailable.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "monix-prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 33,
+        "w": 16,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "monix-prometheus"
+          },
+          "expr": "monix_memory_allocated_bytes{instance=\"$instance\",job=\"monix\"}",
+          "legendFormat": "Alocada",
+          "range": true,
+          "instant": false,
+          "format": "time_series"
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "monix-prometheus"
+          },
+          "expr": "monix_memory_used_bytes{instance=\"$instance\",job=\"monix\"}",
+          "legendFormat": "Usada (total − disponível)",
+          "range": true,
+          "instant": false,
+          "format": "time_series"
+        },
+        {
+          "refId": "C",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "monix-prometheus"
+          },
+          "expr": "monix_memory_available_bytes{instance=\"$instance\",job=\"monix\"}",
+          "legendFormat": "Disponível",
+          "range": true,
+          "instant": false,
+          "format": "time_series"
+        },
+        {
+          "refId": "D",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "monix-prometheus"
+          },
+          "expr": "monix_memory_total_bytes{instance=\"$instance\",job=\"monix\"}",
+          "legendFormat": "Total",
+          "range": true,
+          "instant": false,
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "decimals": 1,
+          "noValue": "Indisponível",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 80
+              },
+              {
+                "color": "red",
+                "value": 95
+              }
+            ]
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "fillOpacity": 8,
+            "showPoints": "never",
+            "spanNulls": false,
+            "axisPlacement": "auto",
+            "axisLabel": ""
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 17,
+      "type": "gauge",
+      "title": "RAM alocada / total",
+      "description": "",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "monix-prometheus"
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 33,
+        "w": 8,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "monix-prometheus"
+          },
+          "expr": "100 * monix_memory_allocated_bytes{instance=\"$instance\",job=\"monix\"} / monix_memory_total_bytes{instance=\"$instance\",job=\"monix\"}",
+          "legendFormat": "RAM",
+          "range": true,
+          "instant": false,
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "decimals": 1,
+          "noValue": "Indisponível",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 80
+              },
+              {
+                "color": "red",
+                "value": 95
+              }
+            ]
+          },
+          "custom": {},
+          "min": 0,
+          "max": 100
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true
+      }
+    },
+    {
+      "id": 18,
+      "type": "row",
+      "title": "Armazenamento — discos físicos e sistemas de arquivos",
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 41,
+        "w": 24,
+        "h": 1
+      },
+      "panels": []
+    },
+    {
+      "id": 19,
+      "type": "table",
+      "title": "Capacidade de cada disco físico",
+      "description": "Capacidade física em bytes. Livre pertence ao sistema de arquivos, não ao dispositivo bruto.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "monix-prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 42,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "monix-prometheus"
+          },
+          "expr": "monix_storage_disk_size_bytes{instance=\"$instance\",job=\"monix\"}",
+          "legendFormat": "",
+          "range": false,
+          "instant": true,
+          "format": "table"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "decimals": 1,
+          "noValue": "Indisponível",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 80
+              },
+              {
+                "color": "red",
+                "value": 95
+              }
+            ]
+          },
+          "custom": {}
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "Disco|Modelo|Serial"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "string"
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        }
+      },
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "__name__": true,
+              "instance": true,
+              "job": true,
+              "hostname": true
+            },
+            "indexByName": {
+              "device": 0,
+              "model": 1,
+              "serial": 2,
+              "Value": 3
+            },
+            "renameByName": {
+              "device": "Disco",
+              "model": "Modelo",
+              "serial": "Serial",
+              "Value": "Capacidade física"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": 20,
+      "type": "timeseries",
+      "title": "Livre nos filesystems de cada disco",
+      "description": "Soma de filesystems únicos pertencentes exclusivamente a um disco. RAID/Btrfs multidisco aparecem na tabela abaixo, sem repetir o espaço inteiro por disco.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "monix-prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 42,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "monix-prometheus"
+          },
+          "expr": "monix_storage_disk_filesystem_free_bytes{instance=\"$instance\",job=\"monix\"}",
+          "legendFormat": "{{device}} — livre",
+          "range": true,
+          "instant": false,
+          "format": "time_series"
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "monix-prometheus"
+          },
+          "expr": "monix_storage_disk_filesystem_size_bytes{instance=\"$instance\",job=\"monix\"}",
+          "legendFormat": "{{device}} — total montado",
+          "range": true,
+          "instant": false,
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "decimals": 1,
+          "noValue": "Indisponível",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 80
+              },
+              {
+                "color": "red",
+                "value": 95
+              }
+            ]
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "fillOpacity": 8,
+            "showPoints": "never",
+            "spanNulls": false,
+            "axisPlacement": "auto",
+            "axisLabel": ""
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 21,
+      "type": "table",
+      "title": "Espaço total e livre por filesystem",
+      "description": "Discos físicos aparecem na coluna physical_device. Livre inclui blocos reservados; disponível é o espaço utilizável por usuários. Bind mounts/subvolumes são deduplicados.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "monix-prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 50,
+        "w": 24,
+        "h": 9
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "monix-prometheus"
+          },
+          "expr": "monix_storage_filesystem_size_bytes{instance=\"$instance\",job=\"monix\"}",
+          "legendFormat": "",
+          "range": false,
+          "instant": true,
+          "format": "table"
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "monix-prometheus"
+          },
+          "expr": "monix_storage_filesystem_free_bytes{instance=\"$instance\",job=\"monix\"}",
+          "legendFormat": "",
+          "range": false,
+          "instant": true,
+          "format": "table"
+        },
+        {
+          "refId": "C",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "monix-prometheus"
+          },
+          "expr": "monix_storage_filesystem_available_bytes{instance=\"$instance\",job=\"monix\"}",
+          "legendFormat": "",
+          "range": false,
+          "instant": true,
+          "format": "table"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "decimals": 1,
+          "noValue": "Indisponível",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 80
+              },
+              {
+                "color": "red",
+                "value": 95
+              }
+            ]
+          },
+          "custom": {}
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "Montagem|Dispositivo|Discos físicos|Filesystem|device.*|fstype.*|physical_device.*|instance.*|hostname.*|job.*"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "string"
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        }
+      },
+      "transformations": [
+        {
+          "id": "joinByField",
+          "options": {
+            "byField": "mountpoint",
+            "mode": "outer"
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "Time 1": true,
+              "Time 2": true,
+              "Time 3": true,
+              "__name__": true,
+              "instance": true,
+              "job": true,
+              "hostname": true,
+              "device 1": true,
+              "device 2": true,
+              "device 3": true,
+              "fstype 1": true,
+              "fstype 2": true,
+              "fstype 3": true,
+              "physical_device 1": true,
+              "physical_device 2": true,
+              "physical_device 3": true
+            },
+            "renameByName": {
+              "mountpoint": "Montagem",
+              "device": "Dispositivo",
+              "physical_device": "Discos físicos",
+              "fstype": "Filesystem",
+              "Value #A": "Total",
+              "Value #B": "Livre",
+              "Value #C": "Disponível"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": 22,
+      "type": "timeseries",
+      "title": "Ocupação por filesystem",
+      "description": "",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "monix-prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 59,
+        "w": 24,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "monix-prometheus"
+          },
+          "expr": "100 * monix_storage_filesystem_used_bytes{instance=\"$instance\",job=\"monix\"} / monix_storage_filesystem_size_bytes{instance=\"$instance\",job=\"monix\"}",
+          "legendFormat": "{{physical_device}} / {{mountpoint}}",
+          "range": true,
+          "instant": false,
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "decimals": 1,
+          "noValue": "Indisponível",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 80
+              },
+              {
+                "color": "red",
+                "value": 95
+              }
+            ]
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "fillOpacity": 8,
+            "showPoints": "never",
+            "spanNulls": false,
+            "axisPlacement": "auto",
+            "axisLabel": ""
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 23,
+      "type": "row",
+      "title": "Sensores da placa mãe e diagnóstico",
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 67,
+        "w": 24,
+        "h": 1
+      },
+      "panels": []
+    },
+    {
+      "id": 24,
+      "type": "timeseries",
+      "title": "Sensores da placa mãe",
+      "description": "A estimativa prioriza Ambient/Inlet e depois SYSTIN/System/Mainboard/Chassis. CPU/VRM/PCH/AUXTIN não entram automaticamente.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "monix-prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 68,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "monix-prometheus"
+          },
+          "expr": "monix_motherboard_temperature_celsius{instance=\"$instance\",job=\"monix\"}",
+          "legendFormat": "{{chip}} / {{label}} ({{role}})",
+          "range": true,
+          "instant": false,
+          "format": "time_series"
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "monix-prometheus"
+          },
+          "expr": "monix_motherboard_ambient_estimate_celsius{instance=\"$instance\",job=\"monix\"}",
+          "legendFormat": "Ar interno / entrada — estimativa",
+          "range": true,
+          "instant": false,
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "celsius",
+          "decimals": 1,
+          "noValue": "Indisponível",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 70
+              },
+              {
+                "color": "red",
+                "value": 90
+              }
+            ]
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "fillOpacity": 8,
+            "showPoints": "never",
+            "spanNulls": false,
+            "axisPlacement": "auto",
+            "axisLabel": ""
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 25,
+      "type": "timeseries",
+      "title": "Demais sensores — identificar antes de usar como ambiente",
+      "description": "Sensores sem identificação adequada ficam visíveis, mas não são usados automaticamente na estimativa do ambiente.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "monix-prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 68,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "monix-prometheus"
+          },
+          "expr": "monix_thermal_sensor_temperature_celsius{instance=\"$instance\",job=\"monix\"}",
+          "legendFormat": "{{chip}} / {{label}}",
+          "range": true,
+          "instant": false,
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "celsius",
+          "decimals": 1,
+          "noValue": "Indisponível",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 70
+              },
+              {
+                "color": "red",
+                "value": 90
+              }
+            ]
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "fillOpacity": 8,
+            "showPoints": "never",
+            "spanNulls": false,
+            "axisPlacement": "auto",
+            "axisLabel": ""
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 26,
+      "type": "stat",
+      "title": "Saúde dos coletores",
+      "description": "",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "monix-prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 76,
+        "w": 12,
+        "h": 5
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "monix-prometheus"
+          },
+          "expr": "monix_collector_success{instance=\"$instance\",job=\"monix\"}",
+          "legendFormat": "{{collector}}",
+          "range": true,
+          "instant": false,
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 0,
+          "noValue": "Indisponível",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 80
+              },
+              {
+                "color": "red",
+                "value": 95
+              }
+            ]
+          },
+          "custom": {},
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "Falha",
+                  "color": "red"
+                },
+                "1": {
+                  "text": "OK",
+                  "color": "green"
+                }
+              }
+            }
+          ]
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      }
+    },
+    {
+      "id": 27,
+      "type": "timeseries",
+      "title": "Duração das coletas",
+      "description": "",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "monix-prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 76,
+        "w": 12,
+        "h": 5
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "monix-prometheus"
+          },
+          "expr": "monix_collector_duration_seconds{instance=\"$instance\",job=\"monix\"}",
+          "legendFormat": "{{collector}}",
+          "range": true,
+          "instant": false,
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "decimals": 1,
+          "noValue": "Indisponível",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 80
+              },
+              {
+                "color": "red",
+                "value": 95
+              }
+            ]
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "fillOpacity": 8,
+            "showPoints": "never",
+            "spanNulls": false,
+            "axisPlacement": "auto",
+            "axisLabel": ""
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    }
+  ]
+}

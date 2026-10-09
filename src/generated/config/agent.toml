@@ -1,0 +1,15 @@
+[monitor]
+interval_seconds = 5
+# Omit machine_id to use the stable system identifier (/etc/machine-id).
+# machine_id = "computer-01"
+ebpf = "auto"
+# cpu_helper = "../build/cpu_usage"
+# ambient_sensors = ["nct6798:temp1"]
+# collectors = ["cpu", "gpu", "memory", "storage", "thermal"]
+
+[api]
+host = "127.0.0.1"
+port = 9108
+
+[prometheus]
+enabled = false

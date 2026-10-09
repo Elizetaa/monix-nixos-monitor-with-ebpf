@@ -1,0 +1,49 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "monix-generated"
+version = "0.2.0"
+description = "Local Linux hardware monitor with a Python library and read-only HTTP API"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = []
+
+[project.scripts]
+monix-agent = "generated.agent:main"
+
+[tool.setuptools]
+package-dir = { generated = "." }
+packages = [
+    "generated",
+    "generated.common",
+    "generated.collectors",
+    "generated.collectors.cpu",
+    "generated.collectors.gpu",
+    "generated.collectors.memory",
+    "generated.collectors.storage",
+    "generated.collectors.thermal",
+]
+include-package-data = false
+
+[tool.setuptools.package-data]
+generated = [
+    "Makefile",
+    "shell.nix",
+    "compose.yml",
+    "config/*.toml",
+    "config/prometheus.yml",
+    "config/grafana/grafana.ini",
+    "config/grafana/dashboards/*.json",
+    "config/grafana/provisioning/dashboards/*.yml",
+    "config/grafana/provisioning/datasources/*.yml",
+    "scripts/*.sh",
+    "examples/*.py",
+]
+"generated.common" = ["collector.mk"]
+"generated.collectors.cpu" = ["Makefile", "*.c"]
+"generated.collectors.gpu" = ["Makefile"]
+"generated.collectors.memory" = ["Makefile"]
+"generated.collectors.storage" = ["Makefile"]
+"generated.collectors.thermal" = ["Makefile"]
