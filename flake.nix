@@ -11,7 +11,19 @@
       pkgs = import nixpkgs {
         inherit system;
       };
+      vm = self.nixosConfigurations.monix-vm.config.system.build.vm;
     in {
+      # VM de laboratório (Monix + Prometheus + Grafana): `nix run .#vm`
+      nixosConfigurations.monix-vm = nixpkgs.lib.nixosSystem {
+        inherit system;
+        modules = [ ./nixos/monix-vm.nix ];
+      };
+      packages.${system}.vm = vm;
+      apps.${system}.vm = {
+        type = "app";
+        program = "${vm}/bin/run-monix-vm-vm";
+      };
+
       devShells.${system} = {
         telemetria = import ./src/telemetria/shell.nix { inherit pkgs; };
         default = pkgs.mkShell {

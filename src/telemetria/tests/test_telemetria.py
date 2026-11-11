@@ -16,6 +16,7 @@ from telemetria.coordenador import Monitor, uso_memoria
 from telemetria.coletores.ebpf.cpu import CpuEbpf
 from telemetria.coletores.ebpf.observador import Observador, SOURCES
 from telemetria.dados import resultado
+from telemetria.prometheus import renderizar
 from telemetria.coletores.sistema import armazenamento, gpu, nvidia, temperatura
 
 
@@ -194,6 +195,43 @@ time.sleep(30)
         monitor.stop()
         self.assertFalse(monitor._thread.is_alive())
 
+    def test_prometheus_exposition_from_snapshot(self):
+        snapshot = {
+            "hostname": "vm", "interval_seconds": 2, "timestamp": "2026-11-11T12:00:00+00:00",
+            "cpu": resultado("ebpf:sched_switch", {"usage_percent": 25.5, "cores": {"10": 1, "2": 50}}),
+            "memory": resultado(SOURCES["memory"], {"total_bytes": 1000, "free_bytes": 100, "shared_bytes": 1,
+                                                    "buffer_bytes": 0, "available_bytes": 400}),
+            "memory_usage": uso_memoria(resultado(SOURCES["memory"], {"total_bytes": 1000, "available_bytes": 400})),
+            "storage": resultado("sysfs:block", {"blocks": [{"device": "vda", "device_id": "253:0", "partition": False,
+                                 "model": None, "serial": None, "capacity_bytes": resultado("sysfs", 4096)}]}),
+            "block_io": resultado(SOURCES["block_io"], {"lost_events": 0, "devices": [
+                {"device_id": "253:0", "operation": "read", "issued": 4, "completion_events": 4,
+                 "completed_bytes": 8192, "errors": 0, "latency_samples": 4, "mean_latency_ms": 2.0}]}),
+            "filesystems": resultado(SOURCES["filesystems"], [
+                {"device": "/dev/vda", "mountpoint": '/a"b', "fstype": "ext4", "error": None,
+                 "data": {"total_bytes": 100, "free_bytes": 40, "available_bytes": 30, "used_bytes": 60,
+                          "usage_percent": 60.0}},
+                {"device": "x", "mountpoint": "/x", "fstype": "xfs", "error": "EIO", "data": None}]),
+            "temperature_zones": resultado(SOURCES["temperature_zones"], [
+                {"id": 0, "type": "acpitz", "age_seconds": 1.0, "temperature_celsius": None, "status": "unavailable"}],
+                status="partial"),
+            "gpu_events": resultado(SOURCES["gpu_events"], status="error", error="hook indisponível"),
+        }
+        text = renderizar(snapshot).decode()
+        self.assertIn('monix_info{hostname="vm"} 1', text)
+        self.assertIn("monix_snapshot_timestamp_seconds 1794398400.0", text)
+        self.assertLess(text.index('core="2"'), text.index('core="10"'))
+        self.assertIn("monix_memory_usage_percent 60.0", text)
+        self.assertIn('monix_block_io_completed_bytes_total{device_id="253:0",device="vda",operation="read"} 8192', text)
+        self.assertIn('monix_block_io_latency_seconds_sum{device_id="253:0",device="vda",operation="read"} 0.008', text)
+        self.assertIn('mountpoint="/a\\"b"', text)
+        self.assertNotIn('mountpoint="/x"', text)
+        self.assertNotIn("monix_thermal_zone_temperature_celsius", text)
+        self.assertIn('monix_thermal_zone_age_seconds{zone="0",type="acpitz"} 1.0', text)
+        self.assertIn('monix_category_status{category="gpu_events",status="error"} 1', text)
+        self.assertEqual(text.count("# TYPE monix_cpu_core_usage_percent gauge"), 1)
+        self.assertNotIn("nan", text.lower().replace("unavailable", ""))
+
     def test_endpoint_failure_isolation_no_fallback_and_shutdown(self):
         self.write(self.proc / "meminfo", "MemTotal: 1000 kB\nMemAvailable: 400 kB\n")
         monitor = Monitor(.02, helper=self.root / "missing", observer_helper=self.root / "missing",
@@ -225,8 +263,14 @@ time.sleep(30)
             self.assertEqual(data[name]["status"], "error")
             self.assertEqual(data[name]["source"], SOURCES[name])
         self.assertEqual(data["storage"]["status"], "error")
+        with urlopen(url + "/metrics", timeout=2) as response:
+            self.assertIn("text/plain", response.headers["Content-Type"])
+            text = response.read().decode()
+        self.assertIn('monix_category_status{category="cpu",status="error"} 1', text)
+        self.assertIn('monix_category_up{category="cpu",source="ebpf:sched_switch"} 0', text)
+        self.assertNotIn("monix_cpu_usage_percent", text)  # null não vira zero
         with self.assertRaises(HTTPError) as context:
-            urlopen(url + "/metrics", timeout=2)
+            urlopen(url + "/inexistente", timeout=2)
         self.assertEqual(context.exception.code, 404)
         context.exception.close()
         monitor.stop()

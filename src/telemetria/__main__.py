@@ -28,7 +28,8 @@ def main():
     with servidor(monitor, args.host, args.port) as server:
         server.timeout = 0.5
         monitor.start()
-        print(f"GET http://{args.host}:{args.port}/api/metrics", flush=True)
+        print(f"GET http://{args.host}:{args.port}/api/metrics (JSON)", flush=True)
+        print(f"GET http://{args.host}:{args.port}/metrics (Prometheus)", flush=True)
         try:
             while not stop.is_set():
                 server.handle_request()

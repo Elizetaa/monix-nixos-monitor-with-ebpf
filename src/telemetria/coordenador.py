@@ -1,4 +1,4 @@
-"""Combina fontes explícitas e publica somente o snapshot JSON atual."""
+"""Combina fontes explícitas e publica o snapshot atual em JSON e no formato Prometheus."""
 import json
 import math
 from pathlib import Path
@@ -7,6 +7,7 @@ import threading
 from datetime import datetime, timezone
 
 from .dados import resultado
+from .prometheus import renderizar
 from .coletores.ebpf.cpu import CpuEbpf
 from .coletores.ebpf.observador import Observador
 from .coletores.sistema import armazenamento, gpu, nvidia, temperatura
@@ -33,6 +34,7 @@ class Monitor:
         self._stop = threading.Event()
         self._lock = threading.Lock()
         self._payload = None
+        self._metrics = None
         self._thread = None
 
     def start(self):
@@ -63,8 +65,13 @@ class Monitor:
                 snapshot["memory_usage"] = uso_memoria(snapshot["memory"])
                 snapshot["timestamp"] = datetime.now(timezone.utc).isoformat()
                 payload = json.dumps(snapshot, ensure_ascii=False, allow_nan=False).encode()
+                try:
+                    metrics = renderizar(snapshot)
+                except Exception as exc:  # um bug no exportador não derruba a API JSON
+                    metrics = (f"# Falha ao gerar métricas: {exc!r}\n"
+                               "# TYPE monix_exporter_error gauge\nmonix_exporter_error 1\n").encode()
                 with self._lock:
-                    self._payload = payload
+                    self._payload, self._metrics = payload, metrics
                 if self._stop.wait(self.interval):
                     break
         finally:
@@ -76,6 +83,10 @@ class Monitor:
     def snapshot(self):
         with self._lock:
             return self._payload
+
+    def metrics(self):
+        with self._lock:
+            return self._metrics
 
     def stop(self):
         self._stop.set()

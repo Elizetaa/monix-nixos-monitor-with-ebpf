@@ -1,0 +1,12 @@
+# Uso fora da VM (ex.: no host, dentro do `nix develop`):
+#   prometheus --config.file=config/prometheus.yml --storage.tsdb.path=/tmp/monix-prometheus
+# Na VM NixOS a configuração equivalente é gerada por nixos/monix-vm.nix.
+global:
+  scrape_interval: 5s
+  evaluation_interval: 5s
+
+scrape_configs:
+  - job_name: monix
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["127.0.0.1:9108"]

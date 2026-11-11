@@ -1,0 +1,7 @@
+apiVersion: 1
+providers:
+  - name: Monix
+    type: file
+    options:
+      # Ajuste para o caminho absoluto do repositório.
+      path: config/grafana/dashboards

@@ -64,7 +64,7 @@ vmlinux.h
 *.btf.o
 
 # bpftool generated files
-*.bpf.h
+# (não ignore *.bpf.h: amostragem.bpf.h e perdas.bpf.h são código-fonte do projeto)
 
 # =========================
 # Clang / LLVM
@@ -97,3 +97,10 @@ Thumbs.db
 *.log
 *.tmp
 *.temp
+
+# VM NixOS
+*.qcow2
+result
+
+# Disco e ISO da VM do QEMU (scripts/qemu-windows.ps1)
+vm/

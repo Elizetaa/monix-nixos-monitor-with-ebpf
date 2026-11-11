@@ -1,8 +1,9 @@
 # Monix — monitor de sistema com eBPF
 
 Projeto de disciplina para explorar instrumentação do kernel. O fluxo é
-**coletores → coordenador → `GET /api/metrics`**, com um snapshot JSON em RAM.
-Python 3.11+, biblioteca padrão e libbpf; sem framework web, banco ou dashboard.
+**coletores → coordenador → `GET /api/metrics`** (snapshot JSON em RAM) e
+**`GET /metrics` → Prometheus → Grafana**. Python 3.11+, biblioteca padrão e
+libbpf; sem framework web. Prometheus e Grafana rodam fora do processo.
 O código ativo fica em `src/telemetria/`; `src/generated/`, `src/ebpf/` e os
 laboratórios permanecem preservados e independentes.
 
@@ -33,6 +34,36 @@ Opções: `--interval`, `--host`, `--port`, `--helper /caminho/cpu_usage` e
 `--observer-helper /caminho/observador`. Os objetos `.bpf.o` ficam ao lado dos
 loaders. Ctrl+C/SIGTERM fecha servidor, worker, processos e links BPF; não há
 objetos pinados. `make -C src/telemetria clean` remove o build novo.
+
+## Grafana (VM NixOS)
+
+**Windows 11 + QEMU (sem Nix no host):** siga [documentation/vm-windows.md](documentation/vm-windows.md).
+A VM instalada usa `nixos/configuration.nix`, que importa `nixos/monix.nix`.
+
+**Host com Nix:** a VM em `nixos/monix-vm.nix` sobe kernel 6.18 com BTF, o Monix como serviço
+systemd (compila os objetos eBPF no boot), Prometheus e Grafana já provisionados.
+
+```sh
+git add -A                 # flakes só enxergam arquivos versionados
+nix run .#vm               # console da VM no terminal; sair: Ctrl+A, X
+```
+
+| Serviço | No host |
+| --- | --- |
+| Grafana (admin/admin), dashboard "Monix — monitor eBPF" | http://localhost:3000 |
+| Prometheus | http://localhost:9090 |
+| Monix `/metrics` e `/api/metrics` | http://localhost:9108 |
+| SSH (monix/monix) | `ssh -p 2222 monix@localhost` |
+
+Dentro da VM: `systemctl status monix`, `journalctl -u monix -f`. O diretório
+onde `nix run` foi chamado aparece em `/mnt/monix`. O disco da VM fica em
+`monix-vm.qcow2`; apague-o para recomeçar do zero.
+
+`/metrics` traduz o snapshot no formato do Prometheus (`src/telemetria/prometheus.py`):
+leituras `null` não viram zero, a série só some naquele ciclo; o estado de cada
+categoria fica em `monix_category_status{category,status}`. Contadores eBPF
+(`*_total`) são cumulativos desde o attach e devem ser lidos com `rate()`.
+Fora da VM: `config/prometheus.yml` e `config/grafana/provisioning/`.
 
 ## Fontes das métricas
 
