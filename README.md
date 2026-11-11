@@ -1,123 +1,85 @@
-# Proposta de Pesquisa
+# Monix — monitor de sistema com eBPF
 
-## Sistema de Gerenciamento de Computadores de Laboratório com eBPF Integrado ao NixOS
+Projeto de disciplina para explorar instrumentação do kernel. O fluxo é
+**coletores → coordenador → `GET /api/metrics`**, com um snapshot JSON em RAM.
+Python 3.11+, biblioteca padrão e libbpf; sem framework web, banco ou dashboard.
+O código ativo fica em `src/telemetria/`; `src/generated/`, `src/ebpf/` e os
+laboratórios permanecem preservados e independentes.
 
-## Visão Geral
+## Execução Linux/NixOS
 
-Este projeto propõe o desenvolvimento de um sistema de gerenciamento de computadores de laboratório utilizando **eBPF (Extended Berkeley Packet Filter)** integrado ao **NixOS**. A proposta busca implementar mecanismos de monitoramento, auditoria e controle diretamente no kernel, permitindo maior segurança, observabilidade e administração das máquinas do laboratório com baixo impacto de desempenho.
+Na raiz:
 
-# Metas
+```sh
+nix develop 'path:.#telemetria'       # ou nix-shell src/telemetria/shell.nix
+make -C src/telemetria check-native
+make -C src/telemetria build
+make -C src/telemetria test
 
-## Segurança e Controle
-
-- Impedir o desligamento dos computadores, exceto por usuários administradores.
-- Limitar acessos simultâneos via SSH (ex.: máximo de dois usuários diferentes por máquina).
-
-## Auditoria
-
-- Registrar histórico de conexões SSH.
-- Registrar histórico de eventos e comandos mais utilizados.
-
-## Telemetria (Opcional)
-
-- Construir uma base de dados sobre a utilização dos computadores.
-- Coletar métricas de:
-  - CPU
-  - GPU
-  - Memória RAM
-  - Armazenamento
-
-## Coleta e Análise de Dados
-
-- Criar uma série temporal das métricas coletadas.
-- Separar os dados por:
-  - usuário;
-  - computador.
-
-## Visualização (Opcional)
-
-- Desenvolver um dashboard interativo.
-- Exibir o uso das máquinas em tempo real.
-
-# Modelo Lógico
-
-## Entidade: Computador
-
-| Coluna | Tipo | Descrição |
-|---------|------|-----------|
-| `id_computador` | INT (PK) | Identificador único do computador |
-| `hostname` | VARCHAR | Nome da máquina (ex.: `lab-pc-01`) |
-| `endereco_ip` | VARCHAR | Endereço IP atual ou estático |
-| `localizacao` | VARCHAR | Bancada ou sala onde o computador está localizado |
-
-## Entidade: Telemetria_Hardware
-
-| Coluna | Tipo | Descrição |
-|---------|------|-----------|
-| `id_telemetria` | INT (PK) | Identificador do registro |
-| `id_computador` | INT (FK) | Referência ao computador |
-| `timestamp` | DATETIME | Data e hora da medição |
-| `temp_cpu` | FLOAT | Temperatura da CPU (°C) |
-| `temp_gpu` | FLOAT | Temperatura da GPU (°C) |
-| `temp_placa_mae` | FLOAT | Temperatura da placa-mãe |
-| `uso_cpu` | FLOAT | Utilização da CPU (%) |
-| `uso_gpu` | FLOAT | Utilização da GPU (%) |
-| `uso_ram` | FLOAT | Utilização da memória RAM (%) |
-| `uso_rom` | FLOAT | Utilização do armazenamento (%) |
-
-## Entidade: Monitoramento_Ventoinhas
-
-| Coluna | Tipo | Descrição |
-|---------|------|-----------|
-| `id_leitura_fan` | INT (PK) | Identificador da leitura |
-| `id_computador` | INT (FK) | Referência ao computador |
-| `timestamp` | DATETIME | Data e hora da medição |
-| `nome_ventoinha` | VARCHAR | Nome da ventoinha (ex.: `CPU_FAN`, `SYS_FAN1`) |
-| `velocidade_rpm` | INT | Velocidade em rotações por minuto |
-| `falha` | BOOLEAN | `true` caso seja detectada falha ou parada |
-
-## Entidade: Acessos_SSH
-
-| Coluna | Tipo | Descrição |
-|---------|------|-----------|
-| `id_acesso` | INT (PK) | Identificador do acesso |
-| `id_computador` | INT (FK) | Referência ao computador |
-| `data_hora` | DATETIME | Momento da tentativa ou login |
-| `usuario` | VARCHAR | Usuário utilizado |
-| `ip_origem` | VARCHAR | IP de origem da conexão |
-| `sucesso` | BOOLEAN | `true` para login bem-sucedido; `false` para falha |
-
-## Entidade: Status_Sistema
-
-| Coluna | Tipo | Descrição |
-|---------|------|-----------|
-| `id_status` | INT (PK) | Identificador do registro |
-| `id_computador` | INT (FK) | Referência ao computador |
-| `timestamp` | DATETIME | Data e hora da medição |
-| `tempo_atividade` | BIGINT | Tempo de atividade (uptime) em segundos |
-| `reinicializacoes` | INT | Quantidade total de reinicializações |
-
-# Relacionamentos
-
-- **Computador** possui múltiplos registros em **Telemetria_Hardware**.
-- **Computador** possui múltiplos registros em **Monitoramento_Ventoinhas**.
-- **Computador** possui múltiplos registros em **Acessos_SSH**.
-- **Computador** possui múltiplos registros em **Status_Sistema**.
-
-```text
-Computador (1)
-    ├── (N) Telemetria_Hardware
-    ├── (N) Monitoramento_Ventoinhas
-    ├── (N) Acessos_SSH
-    └── (N) Status_Sistema
+sudo env PYTHONPATH="$PWD/src" "$(command -v python3)" -m telemetria --interval 2
+# Em outro terminal:
+curl -s http://127.0.0.1:9108/api/metrics | python3 -m json.tool
 ```
 
-# Resultados Esperados
+Build exige clang com backend BPF, compilador C, make, pkg-config, libbpf e
+bpftool. O shell Nix fornece essas ferramentas. Execução exige root ou
+capacidades adequadas, BTF em `/sys/kernel/btf/vmlinux`, suporte a BPF,
+raw tracepoints e trampolins BPF/fexit. O alvo de desenvolvimento é Linux 6.18;
+hooks ausentes ou incompatíveis são sinalizados por categoria, sem adaptação
+legada. DRM depende de um driver que use `gpu_sched` e exponha os eventos
+`drm_sched_job_queue/run/done`. `nvidia-smi` é opcional e vem do driver do host.
 
-Ao final do projeto, espera-se obter um sistema capaz de:
+Opções: `--interval`, `--host`, `--port`, `--helper /caminho/cpu_usage` e
+`--observer-helper /caminho/observador`. Os objetos `.bpf.o` ficam ao lado dos
+loaders. Ctrl+C/SIGTERM fecha servidor, worker, processos e links BPF; não há
+objetos pinados. `make -C src/telemetria clean` remove o build novo.
 
-- Monitorar continuamente o estado das máquinas do laboratório.
-- Aplicar políticas de segurança utilizando eBPF diretamente no kernel.
-- Registrar eventos e acessos para fins de auditoria.
-- Produzir uma base histórica de telemetria para análises futuras.
-- Disponibilizar informações em tempo real para administradores, por meio de um dashboard opcional.
+## Fontes das métricas
+
+| Categoria / métrica | Fonte |
+| --- | --- |
+| `cpu`: uso total e por núcleo | eBPF, `sched_switch` |
+| `memory`: RAM total, livre, disponível, compartilhada e buffers | eBPF, fexit de `si_meminfo` e `si_mem_available` |
+| `memory_usage`: RAM usada e uso % | Derivação dos dados BPF: total − disponível |
+| `memory_events`: páginas alocadas/liberadas | eBPF, eventos `mm_page_*`; atividade, não RSS nem RAM usada |
+| `block_io`: emissões, bytes concluídos, erros e latência média | eBPF, `block_rq_issue/complete`, por dispositivo e leitura/escrita |
+| `filesystems`: espaço total/livre/disponível/usado e uso % | eBPF, fexit de `fd_statfs`; montagens enumeradas por procfs |
+| `temperature_zones`: temperaturas das zonas térmicas | eBPF, `thermal_temperature`, com idade e disponibilidade por zona |
+| `gpu_events`: jobs enfileirados, executados e concluídos | eBPF, eventos DRM; **não equivale a uso global em %** |
+| `storage`: inventário e capacidade bruta de blocos/partições | sysfs; não atribui espaço livre a disco bruto |
+| `gpu`: identificação, uso %, temperatura e fan RPM | DRM/sysfs/hwmon, conforme driver |
+| `gpu_nvidia`: identificação, uso %, temperatura e fan % | Ferramenta externa `nvidia-smi`, separada de sysfs |
+| `temperature`: demais sensores identificados | hwmon/sysfs, sem inferir temperatura ambiente |
+
+Para amostrar memória, o loader lê `/proc/meminfo` **somente como disparo** das
+funções instrumentadas e descarta o texto. Para filesystems, chama `fstatfs`
+e descarta a estrutura recebida em espaço de usuário. Em ambos os casos os
+valores publicados vêm exclusivamente dos mapas BPF. Esses disparos continuam
+usando interfaces Linux: o objetivo é estudar eBPF, não eliminar o userspace.
+Detalhes, mapas e limites: [coletores eBPF](src/telemetria/coletores/ebpf/README.md).
+
+Cada categoria tem `source`, `status`, `data`, `error`. Leituras ausentes ficam
+`null`; estados: `available`, `partial`, `unavailable`, `pending`, `error`.
+Contadores de eventos são cumulativos desde o attach. Zonas sem eventos ficam
+pendentes; leituras antigas são invalidadas após `max(15, 3 × intervalo)` segundos.
+HTTP retorna 503 antes do primeiro snapshot e 200 depois, inclusive com falhas
+explicadas no JSON. O intervalo é uma espera após cada ciclo; não há histórico.
+
+## Validação e remoções
+
+```sh
+make -C src/telemetria validate      # API e dados reais; relata falta de privilégios
+# Exige attach de CPU, memória, páginas, I/O e filesystems:
+sudo "$(command -v python3)" src/telemetria/tests/validar_host.py --require-ebpf
+```
+
+Removidos do fluxo ativo: CPU por procfs e sua opção de CLI, coletor Python de
+memória, leitura de espaço por `statvfs` e leitura de thermal zones por sysfs.
+Não há fallback de sistema para as operações migradas. Permanecem apenas
+fontes complementares sem substituto genérico equivalente implementado.
+
+Verificado: dois loaders C e sete objetos BPF compilaram; 13 testes passaram;
+relocações CO-RE conferidas contra o BTF do host. API real e SIGTERM validados.
+O carregamento dos programas retornou `EPERM`, corretamente exposto no JSON;
+`sudo` não interativo exige senha. **Attach e valores dos novos programas ainda
+precisam ser validados com privilégios**, pelo comando acima.

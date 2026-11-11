@@ -12,33 +12,36 @@
         inherit system;
       };
     in {
-      devShells.${system}.default = pkgs.mkShell {
-        packages = with pkgs; [
-          # eBPF
-          llvmPackages.clang-unwrapped
-          llvm
-          bpftools
-          bpftrace
-          clang
-          libbpf
-          pahole
-          elfutils
-          tcpdump
-          gcc
+      devShells.${system} = {
+        telemetria = import ./src/telemetria/shell.nix { inherit pkgs; };
+        default = pkgs.mkShell {
+          packages = with pkgs; [
+            # eBPF
+            llvmPackages.clang-unwrapped
+            llvm
+            bpftools
+            bpftrace
+            clang
+            libbpf
+            pahole
+            elfutils
+            tcpdump
+            gcc
 
-          # Development
-          python3
-          python3Packages.prometheus-client
+            # Development
+            python3
+            python3Packages.prometheus-client
 
-          # Observability
-          prometheus
-          grafana
+            # Observability
+            prometheus
+            grafana
 
-          # Useful tools
-          iproute2
-          gnumake
-          pkg-config
-        ];
+            # Useful tools
+            iproute2
+            gnumake
+            pkg-config
+          ];
+        };
       };
     };
 }
