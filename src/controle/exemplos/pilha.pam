@@ -1,0 +1,6 @@
+# Esquema didático; não substituir uma pilha de autenticação por este arquivo.
+# Manter auth/account/password originais. Estas são regras de SESSION.
+# "reservar" deve ser a primeira; "confirmar", a última regra de abertura.
+session requisite /caminho/pam_controle.so reservar grupo=wheel
+# ... regras originais, incluindo pam_systemd.so ...
+session requisite /caminho/pam_controle.so confirmar grupo=wheel
