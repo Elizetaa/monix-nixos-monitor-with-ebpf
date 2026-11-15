@@ -45,7 +45,10 @@ in
       mkdir -p /var/lib/monix/src
       cp -r ${telemetriaSrc} /var/lib/monix/src/telemetria
       chmod -R u+w /var/lib/monix/src
-      make -C /var/lib/monix/src/telemetria build
+      # -k: compila tudo o que der. Se faltar algum arquivo (ex.: *.bpf.h), as
+      # categorias afetadas aparecem como "error" no Grafana e o resto funciona.
+      make -k -C /var/lib/monix/src/telemetria build \
+        || echo "monix: parte do build eBPF falhou; veja as mensagens acima" >&2
     '';
     serviceConfig = {
       # eBPF exige root (ou CAP_BPF + CAP_PERFMON + CAP_SYS_RESOURCE).
