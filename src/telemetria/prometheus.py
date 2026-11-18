@@ -31,11 +31,12 @@ class _Registro:
     def __init__(self):
         self.families = {}
 
-    def add(self, name, kind, help_text, value, **labels):
+    # Parâmetros só posicionais (/): rótulos como name=, kind= ou value= não colidem com eles.
+    def add(self, metric, kind, help_text, value, /, **labels):
         value = _number(value)
         if value is None:
             return
-        family = self.families.setdefault(name, (kind, help_text, []))
+        family = self.families.setdefault(metric, (kind, help_text, []))
         family[2].append((labels, value))
 
     def render(self):

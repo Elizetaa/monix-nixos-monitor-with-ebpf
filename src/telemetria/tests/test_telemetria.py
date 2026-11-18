@@ -216,6 +216,13 @@ time.sleep(30)
                 {"id": 0, "type": "acpitz", "age_seconds": 1.0, "temperature_celsius": None, "status": "unavailable"}],
                 status="partial"),
             "gpu_events": resultado(SOURCES["gpu_events"], status="error", error="hook indisponível"),
+            "gpu": resultado("sysfs:drm", [{"id": "card0", "pci_address": "0000:00:02.0", "vendor": "0x1234",
+                                           "name": "bochs-drm", "usage_percent": resultado("sysfs", 7),
+                                           "temperatures_celsius": [], "fans_rpm": []}]),
+            "gpu_nvidia": resultado("nvidia-smi", [{"pci_address": "0000:01:00.0", "name": "RTX",
+                                                   "usage_percent": resultado("nvidia-smi", 3),
+                                                   "temperature_celsius": resultado("nvidia-smi", 50),
+                                                   "fan_percent": resultado("nvidia-smi", None, status="unavailable")}]),
         }
         text = renderizar(snapshot).decode()
         self.assertIn('monix_info{hostname="vm"} 1', text)
@@ -230,6 +237,9 @@ time.sleep(30)
         self.assertIn('monix_thermal_zone_age_seconds{zone="0",type="acpitz"} 1.0', text)
         self.assertIn('monix_category_status{category="gpu_events",status="error"} 1', text)
         self.assertEqual(text.count("# TYPE monix_cpu_core_usage_percent gauge"), 1)
+        # rótulo "name" (GPU) não pode colidir com os parâmetros do registro
+        self.assertIn('monix_gpu_usage_percent{card="card0",pci_address="0000:00:02.0",vendor="0x1234",name="bochs-drm"} 7', text)
+        self.assertIn('monix_nvidia_gpu_temperature_celsius{pci_address="0000:01:00.0",name="RTX"} 50', text)
         self.assertNotIn("nan", text.lower().replace("unavailable", ""))
 
     def test_endpoint_failure_isolation_no_fallback_and_shutdown(self):
