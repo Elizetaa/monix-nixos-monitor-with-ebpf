@@ -15,7 +15,8 @@ let
   telemetriaSrc = ../src/telemetria;
 
   # Ferramentas que o Makefile de src/telemetria precisa (as mesmas do shell.nix).
-  buildTools = with pkgs; [ gnumake gcc llvmPackages.clang-unwrapped bpftools pkg-config coreutils ];
+  # bash: o make do nixpkgs procura "sh" no PATH (o PATH de um serviço não tem shell).
+  buildTools = with pkgs; [ bash gnumake gcc llvmPackages.clang-unwrapped bpftools pkg-config coreutils ];
   pkgConfigPath = lib.makeSearchPathOutput "dev" "lib/pkgconfig" (with pkgs; [ libbpf elfutils zlib ]);
 in
 {
